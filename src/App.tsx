@@ -1,43 +1,95 @@
 import { useState } from 'react';
-import Timer from './components/Timer';
-import Reward from './components/Reward';
-import Garden from './components/Garden';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 
-type Page = 'timer' | 'reward' | 'garden';
+import { GardenPage } from './components/GardenPage';
+import { Plant, RewardModal } from './components/RewardModal';
+import { TimerPage } from './components/TimerPage';
+import { usePomodoro } from './hooks/usePomodoro';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('timer');
+	const navigate = useNavigate();
 
-  const handleTimerComplete = () => {
-    setCurrentPage('reward');
-  };
+	const {
+		timeLeft,
+		isRunning,
+		formatTime,
+		start,
+		pause,
+		setCustomTime,
+		showReward,
+		closeRewardModal,
+	} = usePomodoro();
 
-  const handleRewardClose = () => {
-    setCurrentPage('timer');
-  };
+	const defaultTime = 25;
+	const [plants, setPlants] = useState<(Plant | null)[]>([]);
+	const [lastSetTime, setLastSetTime] = useState<number>(defaultTime);
 
-  const handleNavigateToGarden = () => {
-    setCurrentPage('garden');
-  };
+	const handleRewardSelected = (plant: Plant) => {
+		setPlants((prev) => [...prev, plant]);
+	};
 
-  const handleBackToTimer = () => {
-    setCurrentPage('timer');
-  };
+	const handleSetTimer = (minutes: number) => {
+		setLastSetTime(minutes);
+		setCustomTime(minutes);
+	};
 
-  return (
-    <div className="size-full">
-      {currentPage === 'timer' && (
-        <Timer 
-          onComplete={handleTimerComplete}
-          onNavigateToGarden={handleNavigateToGarden}
-        />
-      )}
-      {currentPage === 'reward' && (
-        <Reward onClose={handleRewardClose} />
-      )}
-      {currentPage === 'garden' && (
-        <Garden onBackToTimer={handleBackToTimer} />
-      )}
-    </div>
-  );
+	const handleReset = () => {
+		pause();
+		setCustomTime(lastSetTime);
+	};
+
+	const handleTestReward = () => {
+		setCustomTime(5 / 60);
+		start();
+	};
+
+	const goToGarden = () => {
+		pause(); // stop timer
+		navigate('/garden');
+	};
+
+	const goBackToTimer = () => {
+		navigate('/');
+	};
+
+	return (
+		<>
+			<Routes>
+				{/* TIMER PAGE — DEFAULT */}
+				<Route
+					path="/"
+					element={
+						<TimerPage
+							timeLeft={timeLeft}
+							isRunning={isRunning}
+							formatTime={formatTime}
+							onStart={start}
+							onPause={pause}
+							onReset={handleReset}
+							onStartBreak={() => handleSetTimer(10)}
+							onStartDefault={goToGarden} // "See your garden"
+							onSetTimer60={() => handleSetTimer(60)}
+							onSetTimer30={() => handleSetTimer(30)}
+							onSetTimer45={() => handleSetTimer(45)}
+							onSetTimer15={() => handleSetTimer(15)}
+							onSetTimer5={() => handleSetTimer(5)}
+							onTestReward={handleTestReward}
+						/>
+					}
+				/>
+
+				{/* GARDEN PAGE — URL ONLY */}
+				<Route
+					path="/garden"
+					element={<GardenPage plants={plants} onBackToTimer={goBackToTimer} />}
+				/>
+			</Routes>
+
+			<RewardModal
+				isOpen={showReward}
+				onClose={closeRewardModal}
+				onRewardSelected={handleRewardSelected}
+			/>
+		</>
+	);
 }

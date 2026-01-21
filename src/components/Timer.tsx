@@ -1,184 +1,143 @@
-import { useState, useEffect } from 'react';
+import { Pause, Play, RotateCcw, SkipForward } from 'lucide-react';
+import { SessionType } from '../hooks/usePomodoro';
+import { Button } from './ui/button';
 
 interface TimerProps {
-  onComplete: () => void;
-  onNavigateToGarden: () => void;
+	timeLeft: number;
+	isRunning: boolean;
+	sessionType: SessionType;
+	completedSessions: number;
+	progress: number;
+	formatTime: (seconds: number) => string;
+	onStart: () => void;
+	onPause: () => void;
+	onReset: () => void;
+	onSkip: () => void;
 }
 
-export default function Timer({ onComplete, onNavigateToGarden }: TimerProps) {
-  const [selectedDuration, setSelectedDuration] = useState<number>(60);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+export function Timer({
+	timeLeft,
+	isRunning,
+	sessionType,
+	completedSessions,
+	progress,
+	formatTime,
+	onStart,
+	onPause,
+	onReset,
+	onSkip,
+}: TimerProps) {
+	const getSessionLabel = () => {
+		switch (sessionType) {
+			case 'work':
+				return 'Focus Time';
+			case 'shortBreak':
+				return 'Short Break';
+			case 'longBreak':
+				return 'Long Break';
+		}
+	};
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isRunning && !isPaused && timeRemaining > 0) {
-      interval = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            setIsRunning(false);
-            setIsPaused(false);
-            onComplete();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    
-    return () => clearInterval(interval);
-  }, [isRunning, isPaused, timeRemaining, onComplete]);
+	const getSessionColor = () => {
+		switch (sessionType) {
+			case 'work':
+				return 'text-green-700';
+			case 'shortBreak':
+				return 'text-blue-600';
+			case 'longBreak':
+				return 'text-purple-600';
+		}
+	};
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+	return (
+		<div className="flex flex-col items-center gap-8">
+			{/* Session Type Badge */}
+			<div className={`text-sm font-medium uppercase tracking-wider ${getSessionColor()}`}>
+				{getSessionLabel()}
+			</div>
 
-  const handleStartStudying = () => {
-    setTimeRemaining(selectedDuration * 60);
-    setIsRunning(true);
-    setIsPaused(false);
-  };
+			{/* Timer Circle */}
+			<div className="relative">
+				{/* Progress Ring */}
+				<svg className="w-72 h-72 transform -rotate-90">
+					<circle
+						cx="144"
+						cy="144"
+						r="136"
+						stroke="currentColor"
+						strokeWidth="8"
+						fill="none"
+						className="text-green-100"
+					/>
+					<circle
+						cx="144"
+						cy="144"
+						r="136"
+						stroke="currentColor"
+						strokeWidth="8"
+						fill="none"
+						strokeLinecap="round"
+						className={
+							sessionType === 'work'
+								? 'text-green-500'
+								: sessionType === 'shortBreak'
+									? 'text-blue-500'
+									: 'text-purple-500'
+						}
+						style={{
+							strokeDasharray: `${2 * Math.PI * 136}`,
+							strokeDashoffset: `${2 * Math.PI * 136 * (1 - progress / 100)}`,
+							transition: 'stroke-dashoffset 1s linear',
+						}}
+					/>
+				</svg>
 
-  const handleStartBreak = () => {
-    setTimeRemaining(5 * 60); // 5 minute break
-    setIsRunning(true);
-    setIsPaused(false);
-  };
+				{/* Timer Display */}
+				<div className="absolute inset-0 flex flex-col items-center justify-center">
+					<div className="text-6xl font-bold text-gray-800 tabular-nums">
+						{formatTime(timeLeft)}
+					</div>
+				</div>
+			</div>
 
-  const handlePause = () => {
-    setIsPaused(!isPaused);
-  };
+			{/* Control Buttons */}
+			<div className="flex items-center gap-4">
+				<Button
+					variant="outline"
+					size="icon"
+					onClick={onReset}
+					className="h-12 w-12 rounded-full border-2"
+				>
+					<RotateCcw className="h-5 w-5" />
+				</Button>
 
-  const handleReset = () => {
-    setIsRunning(false);
-    setIsPaused(false);
-    setTimeRemaining(0);
-  };
+				<Button
+					size="lg"
+					onClick={isRunning ? onPause : onStart}
+					className="h-16 w-16 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg"
+				>
+					{isRunning ? (
+						<Pause className="h-7 w-7" fill="currentColor" />
+					) : (
+						<Play className="h-7 w-7 ml-1" fill="currentColor" />
+					)}
+				</Button>
 
-  return (
-    <div className="bg-[#cdffc0] relative size-full">
-      <div className="absolute content-stretch flex flex-col gap-[8px] items-center justify-center left-[calc(50%-0.5px)] top-[calc(50%-0.03px)] translate-x-[-50%] translate-y-[-50%]">
-        {/* Duration Selection and Action Buttons */}
-        <div className="content-stretch flex gap-[13.562px] h-[83px] items-center leading-[0] relative shrink-0">
-          {/* Start Studying Button */}
-          <button 
-            onClick={handleStartStudying}
-            disabled={isRunning}
-            className="grid-cols-[max-content] grid-rows-[max-content] inline-grid place-items-start relative shrink-0 disabled:opacity-50 transition-opacity hover:opacity-80"
-          >
-            <div className="[grid-area:1_/_1] bg-[#277645] border-[#bbffd4] border-[2.543px] border-solid h-[56px] ml-0 mt-0 rounded-[84.762px] w-[260px]" />
-            <p className="[grid-area:1_/_1] font-['Space_Grotesk:Medium',sans-serif] font-medium leading-[normal] ml-[129.5px] mt-[10px] relative text-[#bbffd4] text-[27.124px] text-center text-nowrap translate-x-[-50%]">
-              Start studying
-            </p>
-          </button>
+				<Button
+					variant="outline"
+					size="icon"
+					onClick={onSkip}
+					className="h-12 w-12 rounded-full border-2"
+				>
+					<SkipForward className="h-5 w-5" />
+				</Button>
+			</div>
 
-          {/* 60 mins */}
-          <button 
-            onClick={() => setSelectedDuration(60)}
-            disabled={isRunning}
-            className="grid-cols-[max-content] grid-rows-[max-content] inline-grid place-items-start relative shrink-0 disabled:opacity-50 transition-all hover:scale-105"
-          >
-            <div className={`[grid-area:1_/_1] border-[2.543px] border-solid h-[56px] ml-0 mt-0 rounded-[84.762px] w-[219.438px] ${
-              selectedDuration === 60 ? 'bg-[#277645] border-[#bbffd4]' : 'bg-[#bbffd4] border-[#277645]'
-            }`} />
-            <p className={`[grid-area:1_/_1] font-['Space_Grotesk:Medium',sans-serif] font-medium leading-[normal] ml-[108.94px] mt-[10px] relative text-[27.124px] text-center translate-x-[-50%] w-[151px] ${
-              selectedDuration === 60 ? 'text-[#bbffd4]' : 'text-[#277645]'
-            }`}>
-              60 mins
-            </p>
-          </button>
-
-          {/* 45 mins */}
-          <button 
-            onClick={() => setSelectedDuration(45)}
-            disabled={isRunning}
-            className="grid-cols-[max-content] grid-rows-[max-content] inline-grid place-items-start relative shrink-0 disabled:opacity-50 transition-all hover:scale-105"
-          >
-            <div className={`[grid-area:1_/_1] border-[2.543px] border-solid h-[56px] ml-0 mt-0 rounded-[84.762px] w-[219.438px] ${
-              selectedDuration === 45 ? 'bg-[#277645] border-[#bbffd4]' : 'bg-[#bbffd4] border-[#277645]'
-            }`} />
-            <p className={`[grid-area:1_/_1] font-['Space_Grotesk:Medium',sans-serif] font-medium leading-[normal] ml-[108.94px] mt-[10px] relative text-[27.124px] text-center translate-x-[-50%] w-[151px] ${
-              selectedDuration === 45 ? 'text-[#bbffd4]' : 'text-[#277645]'
-            }`}>
-              45 mins
-            </p>
-          </button>
-
-          {/* 30 mins */}
-          <button 
-            onClick={() => setSelectedDuration(30)}
-            disabled={isRunning}
-            className="grid-cols-[max-content] grid-rows-[max-content] inline-grid place-items-start relative shrink-0 disabled:opacity-50 transition-all hover:scale-105"
-          >
-            <div className={`[grid-area:1_/_1] border-[2.543px] border-solid h-[56px] ml-0 mt-0 rounded-[84.762px] w-[219.438px] ${
-              selectedDuration === 30 ? 'bg-[#277645] border-[#bbffd4]' : 'bg-[#bbffd4] border-[#277645]'
-            }`} />
-            <p className={`[grid-area:1_/_1] font-['Space_Grotesk:Medium',sans-serif] font-medium leading-[normal] ml-[108.94px] mt-[10px] relative text-[27.124px] text-center translate-x-[-50%] w-[151px] ${
-              selectedDuration === 30 ? 'text-[#bbffd4]' : 'text-[#277645]'
-            }`}>
-              30 mins
-            </p>
-          </button>
-        </div>
-
-        {/* Start Break and See Garden Buttons */}
-        <div className="content-stretch flex gap-[14px] items-center leading-[0] relative shrink-0">
-          <button 
-            onClick={handleStartBreak}
-            disabled={isRunning}
-            className="grid-cols-[max-content] grid-rows-[max-content] inline-grid place-items-start relative shrink-0 disabled:opacity-50 transition-opacity hover:opacity-80"
-          >
-            <div className="[grid-area:1_/_1] bg-[#bbffd4] border-[#277645] border-[2.543px] border-solid h-[56px] ml-0 mt-0 rounded-[84.762px] w-[219.438px]" />
-            <p className="[grid-area:1_/_1] font-['Space_Grotesk:Medium',sans-serif] font-medium leading-[normal] ml-[108.94px] mt-[10px] relative text-[#277645] text-[27.124px] text-center translate-x-[-50%] w-[151px]">
-              Start break
-            </p>
-          </button>
-
-          <button 
-            onClick={onNavigateToGarden}
-            className="grid-cols-[max-content] grid-rows-[max-content] inline-grid place-items-start relative shrink-0 transition-opacity hover:opacity-80"
-          >
-            <div className="[grid-area:1_/_1] bg-[#bbffd4] border-[#277645] border-[2.543px] border-solid h-[56px] ml-0 mt-0 rounded-[84.762px] w-[268.89px]" />
-            <p className="[grid-area:1_/_1] font-['Space_Grotesk:Medium',sans-serif] font-medium leading-[normal] ml-[134.38px] mt-[10px] relative text-[#277645] text-[27.124px] text-center translate-x-[-50%] w-[239.013px]">
-              See your garden
-            </p>
-          </button>
-        </div>
-
-        {/* Timer Display */}
-        <p className="font-['Space_Grotesk:Bold',sans-serif] font-bold leading-[normal] relative shrink-0 text-[#277645] text-[256px] text-nowrap">
-          {isRunning ? formatTime(timeRemaining) : `${selectedDuration.toString().padStart(2, '0')}:00`}
-        </p>
-
-        {/* Pause and Reset Buttons */}
-        <div className="content-stretch flex gap-[13.562px] items-center leading-[0] relative shrink-0">
-          <button 
-            onClick={handlePause}
-            disabled={!isRunning}
-            className="grid-cols-[max-content] grid-rows-[max-content] inline-grid place-items-start relative shrink-0 disabled:opacity-50 transition-opacity hover:opacity-80"
-          >
-            <div className="[grid-area:1_/_1] bg-[#bbffd4] border-[#277645] border-[2.543px] border-solid h-[55.943px] ml-0 mt-0 rounded-[84.762px] w-[171.219px]" />
-            <p className="[grid-area:1_/_1] font-['Space_Grotesk:Medium',sans-serif] font-medium leading-[normal] ml-[86.12px] mt-[10.17px] relative text-[#277645] text-[27.124px] text-center text-nowrap translate-x-[-50%]">
-              {isPaused ? 'Resume' : 'Pause'}
-            </p>
-          </button>
-
-          <button 
-            onClick={handleReset}
-            disabled={!isRunning && timeRemaining === 0}
-            className="grid-cols-[max-content] grid-rows-[max-content] inline-grid place-items-start relative shrink-0 disabled:opacity-50 transition-opacity hover:opacity-80"
-          >
-            <div className="[grid-area:1_/_1] bg-[#bbffd4] border-[#277645] border-[2.543px] border-solid h-[55.943px] ml-0 mt-0 rounded-[84.762px] w-[171.219px]" />
-            <p className="[grid-area:1_/_1] font-['Space_Grotesk:Medium',sans-serif] font-medium leading-[normal] ml-[85.81px] mt-[10.17px] relative text-[#277645] text-[27.124px] text-center text-nowrap translate-x-[-50%]">
-              Reset
-            </p>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+			{/* Session Counter */}
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-gray-600">Sessions completed:</span>
+				<span className="text-lg font-semibold text-green-700">{completedSessions}</span>
+			</div>
+		</div>
+	);
 }
