@@ -7,10 +7,7 @@ interface TimerPageProps {
 	formatTime: (seconds: number) => string;
 	onStart: () => void;
 	onPause: () => void;
-
-	// ✅ NEW: real reset handler (should stop timer + reset time)
 	onReset: () => void;
-
 	onStartBreak: () => void;
 	onStartDefault: () => void;
 	onSetTimer60: () => void;

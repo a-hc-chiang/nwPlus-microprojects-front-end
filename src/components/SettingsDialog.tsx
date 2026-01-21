@@ -125,10 +125,6 @@ export function SettingsDialog({ settings, onSave }: SettingsDialogProps) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Small helper component (no external deps)                            */
-/* ------------------------------------------------------------------ */
-
 interface SettingFieldProps {
   label: string;
   value: number;

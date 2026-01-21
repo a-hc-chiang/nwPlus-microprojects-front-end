@@ -9,7 +9,7 @@ export const plantImages: Record<string, string> = {
 	flower: '/flower.png',
 	pepper: '/pepper.png',
 	orange: '/orange.png',
-	strawberry: 'strawberry.png',
+	strawberry: '/strawberry.png',
 };
 
 export interface Plant {
@@ -54,7 +54,7 @@ export function RewardModal({ isOpen, onClose, onRewardSelected }: RewardModalPr
 	};
 
 	const getPlantIcon = (plant: Plant) => {
-		const plantIcon = <img src={plantImages[plant.type]} alt={plant} className="w-16 h-16" />;
+		const plantIcon = <img src={plantImages[plant.type]} alt={plant.type} className="w-16 h-16" />;
 		return (
 			<div className="w-16 h-16" style={{ '--fill-0': 'none' } as React.CSSProperties}>
 				{plantIcon}

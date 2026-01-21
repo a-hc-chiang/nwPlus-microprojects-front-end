@@ -5,11 +5,9 @@ interface SessionIndicatorProps {
 }
 
 export function SessionIndicator({
-  totalSessions,
   completedSessions,
   sessionsUntilLongBreak,
 }: SessionIndicatorProps) {
-  const currentCycle = Math.floor(completedSessions / sessionsUntilLongBreak);
   const sessionsInCurrentCycle = completedSessions % sessionsUntilLongBreak;
 
   return (
