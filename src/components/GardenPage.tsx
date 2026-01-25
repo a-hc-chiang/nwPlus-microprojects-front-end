@@ -24,10 +24,7 @@ export function GardenPage({ plants, onBackToTimer }: GardenPageProps) {
 			</div>
 		);
 	};
-
-	// Fill grid with plants or empty slots
 	const gardenGrid = Array.from({ length: GRID_SIZE }, (_, i) => plants[i] ?? null);
-
 	return (
 		<div className="min-h-screen bg-[#CDFFC0] flex items-center justify-center p-12">
 			<div className="w-full max-w-6xl">
@@ -40,15 +37,7 @@ export function GardenPage({ plants, onBackToTimer }: GardenPageProps) {
 						>
 							Go Back to Timer
 						</Button>
-
-						<Button
-							variant="outline"
-							className=" h-10 text-[17px] font-semibold bg-[#BBFFD4] border-2 border-[#277645] text-[#2d5f4c] rounded-full hover:bg-[#a8e6c1]"
-						>
-							Filter garden
-						</Button>
 					</div>
-
 					{/* Garden Grid */}
 					<div className="grid grid-cols-6 place-items-center gap-6 p-5">
 						{gardenGrid.map((plant, index) => (
