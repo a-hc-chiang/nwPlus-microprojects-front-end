@@ -19,7 +19,7 @@ export interface PomodoroState {
 }
 
 const DEFAULT_SETTINGS: PomodoroSettings = {
-  workDuration: 25,
+  workDuration: 25, // 25 
   shortBreakDuration: 5,
   longBreakDuration: 15,
   sessionsUntilLongBreak: 4,
@@ -32,27 +32,22 @@ export function usePomodoro() {
   const [isRunning, setIsRunning] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
   const [showReward, setShowReward] = useState(false);
+  const [lastFocusMinutes, setLastFocusMinutes] = useState<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get duration for current session type
   const getCurrentDuration = useCallback((type: SessionType) => {
     switch (type) {
-      case 'work':
-        return settings.workDuration * 60;
-      case 'shortBreak':
-        return settings.shortBreakDuration * 60;
-      case 'longBreak':
-        return settings.longBreakDuration * 60;
+      case 'work': return settings.workDuration * 60;
+      case 'shortBreak': return settings.shortBreakDuration * 60;
+      case 'longBreak': return settings.longBreakDuration * 60;
     }
   }, [settings]);
 
-  // Timer tick
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            // Timer completed
             handleTimerComplete();
             return 0;
           }
@@ -65,23 +60,23 @@ export function usePomodoro() {
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isRunning, timeLeft]);
 
   const handleTimerComplete = () => {
     setIsRunning(false);
-    
+
     if (sessionType === 'work') {
       const newCompletedSessions = completedSessions + 1;
       setCompletedSessions(newCompletedSessions);
-      
+
+      // Save focus minutes for reward modal
+      setLastFocusMinutes(settings.workDuration);
+
       // Show reward modal
       setShowReward(true);
-      
-      // Determine next break type
+
       if (newCompletedSessions % settings.sessionsUntilLongBreak === 0) {
         setSessionType('longBreak');
         setTimeLeft(getCurrentDuration('longBreak'));
@@ -90,7 +85,6 @@ export function usePomodoro() {
         setTimeLeft(getCurrentDuration('shortBreak'));
       }
     } else {
-      // Break finished, back to work
       setSessionType('work');
       setTimeLeft(getCurrentDuration('work'));
     }
@@ -98,19 +92,12 @@ export function usePomodoro() {
 
   const start = () => setIsRunning(true);
   const pause = () => setIsRunning(false);
-  
-  const reset = () => {
-    setIsRunning(false);
-    setTimeLeft(getCurrentDuration(sessionType));
-  };
-
+  const reset = () => setIsRunning(false) && setTimeLeft(getCurrentDuration(sessionType));
   const skip = () => {
     setIsRunning(false);
-    
     if (sessionType === 'work') {
       const newCompletedSessions = completedSessions + 1;
       setCompletedSessions(newCompletedSessions);
-      
       if (newCompletedSessions % settings.sessionsUntilLongBreak === 0) {
         setSessionType('longBreak');
         setTimeLeft(getCurrentDuration('longBreak'));
@@ -129,9 +116,7 @@ export function usePomodoro() {
     setTimeLeft(minutes * 60);
   };
 
-  const closeRewardModal = () => {
-    setShowReward(false);
-  };
+  const closeRewardModal = () => setShowReward(false);
 
   const updateSettings = (newSettings: PomodoroSettings) => {
     setSettings(newSettings);
@@ -141,15 +126,15 @@ export function usePomodoro() {
     setCompletedSessions(0);
   };
 
-  const formatTime = (seconds: number): string => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
   };
 
   const progress = (() => {
-    const totalDuration = getCurrentDuration(sessionType);
-    return ((totalDuration - timeLeft) / totalDuration) * 100;
+    const total = getCurrentDuration(sessionType);
+    return ((total - timeLeft)/total)*100;
   })();
 
   return {
@@ -160,6 +145,7 @@ export function usePomodoro() {
     settings,
     progress,
     showReward,
+    lastFocusMinutes,
     formatTime,
     start,
     pause,

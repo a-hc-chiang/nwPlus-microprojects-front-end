@@ -1,95 +1,108 @@
 import { useState } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
-
 import { GardenPage } from './components/GardenPage';
 import { Plant, RewardModal } from './components/RewardModal';
 import { TimerPage } from './components/TimerPage';
 import { usePomodoro } from './hooks/usePomodoro';
+import { completeFocus } from './api/rewards';
 
 export default function App() {
-	const navigate = useNavigate();
+  const navigate = useNavigate();
 
-	const {
-		timeLeft,
-		isRunning,
-		formatTime,
-		start,
-		pause,
-		setCustomTime,
-		showReward,
-		closeRewardModal,
-	} = usePomodoro();
+  const {
+    timeLeft,
+    isRunning,
+    formatTime,
+    start,
+    pause,
+    setCustomTime,
+    showReward,
+    lastFocusMinutes,
+    closeRewardModal,
+  } = usePomodoro();
 
-	const defaultTime = 25;
-	const [plants, setPlants] = useState<(Plant | null)[]>([]);
-	const [lastSetTime, setLastSetTime] = useState<number>(defaultTime);
+  const defaultTime = 25;
+  const [plants, setPlants] = useState<(Plant | null)[]>([]);
+  const [lastSetTime, setLastSetTime] = useState<number>(defaultTime);
 
-	const handleRewardSelected = (plant: Plant) => {
-		setPlants((prev) => [...prev, plant]);
-	};
+  const handleSetTimer = (minutes: number) => {
+    setLastSetTime(minutes);
+    setCustomTime(minutes);
+  };
 
-	const handleSetTimer = (minutes: number) => {
-		setLastSetTime(minutes);
-		setCustomTime(minutes);
-	};
+// const handleSetTimer = (seconds: number) => {
+// 	setLastSetTime(seconds); // store the value for reset
+// 	setCustomTime(seconds / 60); // convert seconds → minutes if your timer internally uses minutes
+//   };
 
-	const handleReset = () => {
-		pause();
-		setCustomTime(lastSetTime);
-	};
+  const handleReset = () => {
+    pause();
+    setCustomTime(lastSetTime);
+  };
 
-	const handleTestReward = () => {
-		setCustomTime(5 / 60);
-		start();
-	};
 
-	const goToGarden = () => {
-		pause(); // stop timer
-		navigate('/garden');
-	};
+  const goToGarden = async () => {
+	pause(); // stop timer
 
-	const goBackToTimer = () => {
-		navigate('/');
-	};
+	try {
+	  const res = await fetch("http://localhost:8000/api/gallery");
+	  const data = await res.json();
+	  // assuming data.rewards is an array of Plant
+	  setPlants(data.rewards || []);
+	} catch (err) {
+	  console.error("Failed to fetch garden", err);
+	  setPlants([]); // fallback empty
+	}
+  
+	navigate("/garden");
+  };
 
-	return (
-		<>
-			<Routes>
-				{/* TIMER PAGE — DEFAULT */}
-				<Route
-					path="/"
-					element={
-						<TimerPage
-							timeLeft={timeLeft}
-							isRunning={isRunning}
-							formatTime={formatTime}
-							onStart={start}
-							onPause={pause}
-							onReset={handleReset}
-							onStartBreak={() => handleSetTimer(10)}
-							onStartDefault={goToGarden} // "See your garden"
-							onSetTimer60={() => handleSetTimer(60)}
-							onSetTimer30={() => handleSetTimer(30)}
-							onSetTimer45={() => handleSetTimer(45)}
-							onSetTimer15={() => handleSetTimer(15)}
-							onSetTimer5={() => handleSetTimer(5)}
-							onTestReward={handleTestReward}
-						/>
-					}
-				/>
+  const goBackToTimer = () => navigate('/');
 
-				{/* GARDEN PAGE — URL ONLY */}
-				<Route
-					path="/garden"
-					element={<GardenPage plants={plants} onBackToTimer={goBackToTimer} />}
-				/>
-			</Routes>
+  return (
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <TimerPage
+              timeLeft={timeLeft}
+              isRunning={isRunning}
+              formatTime={formatTime}
+              onStart={start}
+              onPause={pause}
+              onReset={handleReset}
+              onStartBreak={() => handleSetTimer(10)}
+              onStartDefault={goToGarden}
+              onSetTimer60={() => handleSetTimer(60)}
+              onSetTimer30={() => handleSetTimer(30)}
+              onSetTimer45={() => handleSetTimer(45)}
+              onSetTimer15={() => handleSetTimer(15)}
+              onSetTimer5={() => handleSetTimer(5)}
+            />
+          }
+        />
 
-			<RewardModal
-				isOpen={showReward}
-				onClose={closeRewardModal}
-				onRewardSelected={handleRewardSelected}
-			/>
-		</>
-	);
+        <Route
+          path="/garden"
+          element={<GardenPage plants={plants} onBackToTimer={goBackToTimer} />}
+        />
+      </Routes>
+
+      <RewardModal
+        isOpen={showReward}
+        focusMinutes={lastSetTime}
+        onClose={closeRewardModal}
+        onAccept={async (minutes) => {
+          try {
+            const res = await completeFocus(minutes);
+            console.log('Reward saved:', res);
+          } catch (err) {
+            console.error('Failed to save reward', err);
+          }
+          closeRewardModal();
+        }}
+      />
+    </>
+  );
 }

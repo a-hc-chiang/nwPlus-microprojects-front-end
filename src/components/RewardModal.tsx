@@ -1,8 +1,5 @@
-import { useState } from 'react';
+import { useState , useEffect, useMemo } from 'react';
 import { Button } from './ui/button';
-
-export type PlantType = 'flower' | 'mango' | 'strawberry' | 'orange' | 'pepper';
-export type PlantColor = 'default'; // Using actual images now, so color is built-in
 
 export const plantImages: Record<string, string> = {
 	mango: '/mango.png',
@@ -11,6 +8,9 @@ export const plantImages: Record<string, string> = {
 	orange: '/orange.png',
 	strawberry: '/strawberry.png',
 };
+
+export type PlantType = 'flower' | 'mango' | 'strawberry' | 'orange' | 'pepper';
+export type PlantColor = 'default';
 
 export interface Plant {
 	type: PlantType;
@@ -22,36 +22,49 @@ export type FlowerColor = PlantColor;
 
 interface RewardModalProps {
 	isOpen: boolean;
+	focusMinutes: number
 	onClose: () => void;
-	onRewardSelected: (plant: Plant) => void;
+	onAccept: (focusMinutes: number) => void; 
 }
 
-const PLANT_TYPES: PlantType[] = ['flower', 'mango', 'strawberry', 'orange', 'pepper'];
-const PLANT_COLORS: PlantColor[] = ['default'];
+function plantForMinutes(minutes: number): Plant {
+	switch (minutes) {
+	  case 0.15: // 30
+		return { type: 'mango', color: 'default' };
+	  case 0.30: // 45 
+		return { type: 'orange', color: 'default' };
+	  case 1: // 60
+		return { type: 'strawberry', color: 'default' };
+	  default:
+		return { type: 'flower', color: 'default' };
+	}
+  }
 
-export function RewardModal({ isOpen, onClose, onRewardSelected }: RewardModalProps) {
+
+export function RewardModal({ isOpen, focusMinutes, onClose, onAccept}: RewardModalProps) {
 	const [revealed, setRevealed] = useState<number | null>(null);
-	const [selectedReward, setSelectedReward] = useState<Plant | null>(null);
 
+  // compute reward whenever focusMinutes changes
+  	console.log("focusMinutes:", focusMinutes);
+  	const reward = useMemo(() => plantForMinutes(focusMinutes), [focusMinutes]);
+
+	useEffect(() => {
+		if (isOpen) setRevealed(null);
+	  }, [isOpen]);
+	
+	
 	if (!isOpen) return null;
 
 	const handleReveal = (index: number) => {
 		if (revealed !== null) return;
-
-		const randomType = PLANT_TYPES[Math.floor(Math.random() * PLANT_TYPES.length)];
-		const randomColor = PLANT_COLORS[Math.floor(Math.random() * PLANT_COLORS.length)];
 		setRevealed(index);
-		setSelectedReward({ type: randomType, color: randomColor });
 	};
 
 	const handleAccept = () => {
-		if (selectedReward) {
-			onRewardSelected(selectedReward);
-			setRevealed(null);
-			setSelectedReward(null);
-			onClose();
-		}
-	};
+		onAccept(focusMinutes);
+		onClose();
+	  };
+	  
 
 	const getPlantIcon = (plant: Plant) => {
 		const plantIcon = <img src={plantImages[plant.type]} alt={plant.type} className="w-16 h-16" />;
@@ -77,9 +90,9 @@ export function RewardModal({ isOpen, onClose, onRewardSelected }: RewardModalPr
 							disabled={revealed !== null}
 							className="w-24 h-24 rounded-full border-2 border-[#277645] bg-[#CDFFC0] flex items-center justify-center hover:bg-[#b8e6ad] disabled:hover:bg-[#CDFFC0] transition-all disabled:cursor-not-allowed"
 						>
-							{revealed === index && selectedReward ? (
-								getPlantIcon(selectedReward)
-							) : (
+						{revealed === index ? (
+							getPlantIcon(reward)
+						) : (
 								<span className="text-5xl text-[#277645] font-bold">?</span>
 							)}
 						</button>
