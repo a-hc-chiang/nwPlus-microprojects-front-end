@@ -1,4 +1,4 @@
-import { useState , useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from './ui/button';
 
 export const plantImages: Record<string, string> = {
@@ -22,37 +22,37 @@ export type FlowerColor = PlantColor;
 
 interface RewardModalProps {
 	isOpen: boolean;
-	focusMinutes: number
+	focusMinutes: number;
 	onClose: () => void;
-	onAccept: (focusMinutes: number) => void; 
+	onAccept: (focusMinutes: number) => void;
 }
 
 function plantForMinutes(minutes: number): Plant {
 	switch (minutes) {
-	  case 0.15: // 30
-		return { type: 'mango', color: 'default' };
-	  case 0.30: // 45 
-		return { type: 'orange', color: 'default' };
-	  case 1: // 60
-		return { type: 'strawberry', color: 'default' };
-	  default:
-		return { type: 'flower', color: 'default' };
+		case 0.15: // 30
+			return { type: 'mango', color: 'default' };
+		case 0.3: // 45
+			return { type: 'orange', color: 'default' };
+		case 1: // 60
+			return { type: 'strawberry', color: 'default' };
+		default:
+			return { type: 'flower', color: 'default' };
 	}
-  }
+}
 
-
-export function RewardModal({ isOpen, focusMinutes, onClose, onAccept}: RewardModalProps) {
+export function RewardModal({ isOpen, focusMinutes, onClose, onAccept }: RewardModalProps) {
 	const [revealed, setRevealed] = useState<number | null>(null);
 
-  // compute reward whenever focusMinutes changes
-  	console.log("focusMinutes:", focusMinutes);
-  	const reward = useMemo(() => plantForMinutes(focusMinutes), [focusMinutes]);
+	// compute reward whenever focusMinutes changes
+	// console.log('focusMinutes:', focusMinutes);
+	const reward = useMemo(() => plantForMinutes(focusMinutes), [focusMinutes]);
 
 	useEffect(() => {
+		// console.log('Changing is open');
+		// console.log(revealed);
 		if (isOpen) setRevealed(null);
-	  }, [isOpen]);
-	
-	
+	}, [isOpen]);
+
 	if (!isOpen) return null;
 
 	const handleReveal = (index: number) => {
@@ -63,8 +63,7 @@ export function RewardModal({ isOpen, focusMinutes, onClose, onAccept}: RewardMo
 	const handleAccept = () => {
 		onAccept(focusMinutes);
 		onClose();
-	  };
-	  
+	};
 
 	const getPlantIcon = (plant: Plant) => {
 		const plantIcon = <img src={plantImages[plant.type]} alt={plant.type} className="w-16 h-16" />;
@@ -90,9 +89,9 @@ export function RewardModal({ isOpen, focusMinutes, onClose, onAccept}: RewardMo
 							disabled={revealed !== null}
 							className="w-24 h-24 rounded-full border-2 border-[#277645] bg-[#CDFFC0] flex items-center justify-center hover:bg-[#b8e6ad] disabled:hover:bg-[#CDFFC0] transition-all disabled:cursor-not-allowed"
 						>
-						{revealed === index ? (
-							getPlantIcon(reward)
-						) : (
+							{revealed === index ? (
+								getPlantIcon(reward)
+							) : (
 								<span className="text-5xl text-[#277645] font-bold">?</span>
 							)}
 						</button>
