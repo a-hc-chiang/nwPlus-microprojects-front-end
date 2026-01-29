@@ -15,7 +15,6 @@ interface TimerPageProps {
 	onSetTimer45: () => void;
 	onSetTimer15: () => void;
 	onSetTimer5: () => void;
-	onTestReward?: () => void; // New test function
 }
 
 export function TimerPage({
@@ -33,7 +32,6 @@ export function TimerPage({
 	onSetTimer45,
 	onSetTimer15,
 	onSetTimer5,
-	onTestReward,
 }: TimerPageProps) {
 	return (
 		<div className="min-h-screen bg-[#CDFFC0] flex items-center justify-center p-8">
@@ -181,15 +179,6 @@ export function TimerPage({
 					>
 						See your garden
 					</Button>
-					{onTestReward && (
-						<Button
-							variant="outline"
-							className="w-[204px] h-10 text-[15px] font-medium bg-[#BBFFD4] border-2 border-[#277645] text-[#2d5f4c] rounded-full hover:bg-[#a8e6c1] opacity-70"
-							onClick={onTestReward}
-						>
-							🌸 Test Reward (5 sec)
-						</Button>
-					)}
 				</div>
 			</div>
 		</div>

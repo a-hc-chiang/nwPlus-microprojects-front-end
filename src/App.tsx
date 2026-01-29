@@ -17,7 +17,6 @@ export default function App() {
 		pause,
 		setCustomTime,
 		showReward,
-		lastFocusMinutes,
 		closeRewardModal,
 	} = usePomodoro();
 
@@ -29,11 +28,6 @@ export default function App() {
 		setLastSetTime(minutes);
 		setCustomTime(minutes);
 	};
-
-	// const handleSetTimer = (seconds: number) => {
-	// 	setLastSetTime(seconds); // store the value for reset
-	// 	setCustomTime(seconds / 60); // convert seconds → minutes if your timer internally uses minutes
-	//   };
 
 	const handleReset = () => {
 		pause();
