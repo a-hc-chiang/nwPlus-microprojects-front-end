@@ -1,5 +1,5 @@
 export async function completeFocus (focusMinutes: number) {
-    const res = await fetch("http://localhost:8000/api/completeFocus", {
+    const res = await fetch("http://localhost:8000/api/complete-focus", {
         method: "POST", 
         headers: {
             "Content-Type": "application/json", 
