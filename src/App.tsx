@@ -38,7 +38,7 @@ export default function App() {
 		pause(); // stop timer
 
 		try {
-			const res = await fetch('http://localhost:8000/api/gallery');
+			const res = await fetch('http://localhost:8000/api/rewards');
 			const data = await res.json();
 			// assuming data.rewards is an array of Plant
 			setPlants(data.rewards || []);
